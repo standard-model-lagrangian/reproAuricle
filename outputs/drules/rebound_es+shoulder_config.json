@@ -1,0 +1,35 @@
+{
+  "config": {
+    "window_s": 60.0,
+    "min_window_s": 30.0,
+    "settle_s": 10.0,
+    "labels": [
+      0
+    ],
+    "hp_hz": 0.2,
+    "pre_ms": 100.0,
+    "post_ms": 800.0,
+    "rr_tol": 0.2,
+    "min_corr": 0.8,
+    "min_beats": 10,
+    "min_accept_frac": 0.6,
+    "max_split_ecg_s_ms": 10.0,
+    "max_split_s_d_ms": 15.0,
+    "flat_frac_max": 0.5,
+    "d_window_ms": [
+      120.0,
+      400.0
+    ],
+    "d_min_prom_frac": 0.05,
+    "d_rule": "rebound_es+shoulder"
+  },
+  "specs": [
+    "sg:61:4"
+  ],
+  "channels": [
+    "PPG_Ear",
+    "PPG_Finger"
+  ],
+  "n_records": 107,
+  "failures": []
+}

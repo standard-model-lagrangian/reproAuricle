@@ -1,0 +1,8 @@
+test,stat,p,n,p_holm
+ear_reb_rise_frac vs LVEF | age (HFC),-0.10335255247897654,0.6930385186570307,18,1.0
+finger_no_rebound_frac vs LVEF | age (HFC),0.2646700830473638,0.20105710136770819,26,1.0
+ear_no_rebound_frac vs LVEF | age (HFC),0.17414285588289102,0.5038428816099513,18,1.0
+"ear flatness (-reb_rise_frac) AUROC, EF>=50 vs EF<40",0.58,0.6786546786546787,15,1.0
+"finger flatness (-reb_rise_frac) AUROC, EF>=50 vs EF<40",0.6785714285714286,0.17886087422758368,22,1.0
+"ear flatness AUROC, HF vs HC, age 28-57",0.5532544378698225,0.6628570684685373,26,1.0
+"finger flatness AUROC, HF vs HC, age 28-57",0.5282051282051282,0.8177398653008938,28,1.0

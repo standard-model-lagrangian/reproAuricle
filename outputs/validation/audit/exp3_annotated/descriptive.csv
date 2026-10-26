@@ -1,0 +1,7 @@
+test,rho,p,n
+finger_reb_rise_frac vs age within HC,-0.0004091515471215605,0.9979481777432773,42
+ear_reb_rise_frac vs age within HC,-0.05592032431561705,0.7318056258678645,40
+finger_no_rebound_frac vs age within HC,,,42
+ear_no_rebound_frac vs age within HC,0.006747506288057772,0.9670390545482211,40
+ear D_sharpness vs LVEF | age (HFC),0.6702622239159517,0.09942825502758071,8
+finger D_sharpness vs LVEF | age (HFC),-0.2732016442102005,0.25775658494424525,20

@@ -1,0 +1,5 @@
+,channel,cohort,records,records_>=1_ok,records_>=3_ok,windows,windows_ok_frac,median_beats_per_ok_window
+0,PPG_Ear,HC,77,54,48,1347,0.5085374907201188,65.0
+1,PPG_Ear,HFC,27,10,8,467,0.22055674518201285,50.0
+2,PPG_Finger,HC,77,75,75,1347,0.8537490720118782,63.0
+3,PPG_Finger,HFC,27,23,23,467,0.582441113490364,51.0

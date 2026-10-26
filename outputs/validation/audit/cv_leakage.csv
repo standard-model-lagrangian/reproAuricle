@@ -1,0 +1,2 @@
+test,mean_AUROC,sd_AUROC,expected
+"E1 finger M2 features, permuted HF labels (40 x 5x5-fold)",0.4868461538461538,0.12474729485629937,0.5

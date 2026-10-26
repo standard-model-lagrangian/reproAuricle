@@ -1,0 +1,63 @@
+{
+  "config": {
+    "window_s": 60.0,
+    "min_window_s": 30.0,
+    "settle_s": 10.0,
+    "labels": [
+      0
+    ],
+    "hp_hz": 0.2,
+    "pre_ms": 100.0,
+    "post_ms": 800.0,
+    "rr_tol": 0.2,
+    "min_corr": 0.8,
+    "min_beats": 10,
+    "min_accept_frac": 0.6,
+    "max_split_ecg_s_ms": 10.0,
+    "max_split_s_d_ms": 15.0,
+    "flat_frac_max": 0.5,
+    "d_window_ms": [
+      120.0,
+      400.0
+    ],
+    "d_min_prom_frac": 0.05,
+    "d_rule": "rebound_es"
+  },
+  "specs": [
+    "bw:40",
+    "sg:11:2",
+    "sg:21:2",
+    "sg:21:4",
+    "sg:21:6",
+    "sg:31:2",
+    "sg:31:4",
+    "sg:31:6",
+    "sg:41:2",
+    "sg:41:4",
+    "sg:41:6",
+    "sg:51:2",
+    "sg:51:4",
+    "sg:51:6",
+    "sg:61:2",
+    "sg:61:4",
+    "sg:61:6",
+    "sg:81:2",
+    "sg:81:4",
+    "sg:81:6",
+    "sg:101:2",
+    "sg:101:4",
+    "sg:101:6",
+    "sg:121:2",
+    "sg:121:4",
+    "sg:121:6",
+    "sg:151:2",
+    "sg:151:4",
+    "sg:151:6"
+  ],
+  "channels": [
+    "PPG_Ear",
+    "PPG_Finger"
+  ],
+  "n_records": 107,
+  "failures": []
+}

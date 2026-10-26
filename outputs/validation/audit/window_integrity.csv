@@ -1,0 +1,3 @@
+windows,n_ppg,n_ref,matched,label_mismatch,overlapping,annotated_windows_checked,spanning_two_labels,unannotated_windows,unannotated_records
+rest,1814,1814,1814,0,0,1721,0,93,HC_1_1 HC_38_2 HFC_108_1 HFC_124_1
+all_20s,7062,7062,7062,0,0,6783,0,279,HC_1_1 HC_38_2 HFC_108_1 HFC_124_1

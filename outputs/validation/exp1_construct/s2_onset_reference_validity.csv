@@ -1,0 +1,8 @@
+check,value,detail
+R1 PCG S2 QC yield (windows),0.8174738034551119,102 records with >= 50% ok of 107
+"R2 earbud S2 vs PCG S2, within-record beta",0.7281577429158114,CI 0.61-0.82; rmcorr 0.75; 91 rec / 3113 win; median lag 35 ms
+"R3 QS2 - (Weissler QS2 - 35), session median [HC]",-21.329476195197657,"IQR -33 to -13 ms, n=76"
+"R3 CNAP ET - Weissler LVET, session median [HC]",-24.53089392073238,"IQR -39 to -13 ms, n=75"
+"R3 QS2 - (Weissler QS2 - 35), session median [HFC]",-2.4534300055772746,"IQR -28 to 14 ms, n=27"
+"R3 CNAP ET - Weissler LVET, session median [HFC]",-45.05305017731488,"IQR -73 to -34 ms, n=26"
+"R4 CNAP ET on PCG QS2, within-record beta",0.08491434860651295,CI -0.05-0.23; rmcorr 0.05; 99 rec

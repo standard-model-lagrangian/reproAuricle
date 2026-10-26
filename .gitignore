@@ -1,0 +1,20 @@
+.venv*/
+__pycache__/
+*.pyc
+.DS_Store
+data/*
+!data/README.md
+outputs_fresh/
+# Large per-window tables (> 1 MB) are not committed; ./reproduce.sh regenerates them.
+outputs/**/windows_*.csv
+outputs/screen/screen_rest.csv
+outputs/sg_grid/sg_grid_rest.csv
+outputs/drules/window.csv
+outputs/drules/rebound.csv
+outputs/drules/rebound_es.csv
+outputs/drules/rebound_es+shoulder.csv
+outputs/sensitivity/*.csv
+outputs/validation/reference_*.csv
+outputs/validation/exp2_site_rebound/deconvolution_windows.csv
+outputs/validation/exp2_site_rebound/transfer_fits.csv
+outputs/sweep/trials.csv

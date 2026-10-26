@@ -1,0 +1,10 @@
+# Python 3.15 (tested). Exact pins: results are bit-identical under these versions.
+joblib==1.6.0
+matplotlib==3.11.2
+neurokit2==0.2.13
+numpy==2.5.4
+pandas==2.3.3
+scikit-learn==1.9.1
+scipy==1.18.1
+tabulate==0.10.0
+wfdb==4.3.1

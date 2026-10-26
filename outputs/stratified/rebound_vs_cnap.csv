@@ -1,0 +1,3 @@
+channel,n_records,rebound_cnap_ok,rebound_cnap_invalid,wilcoxon_p
+PPG_Ear,9.0,0.6769005847953217,0.6666666666666666,1.0
+PPG_Finger,12.0,0.8511904761904762,0.7916666666666666,0.5

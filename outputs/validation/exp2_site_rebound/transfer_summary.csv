@@ -1,0 +1,2 @@
+n_windows,median_R2,q25_R2,share_R2_ge_0.95,median_sigma_ms,median_delta_ms,sigma_ear_reb (finger reb),sigma_ear_noreb (finger reb),window_AUROC_sigma_for_ear_noreb,subject_AUROC_sigma,subject_spearman_sigma_vs_noreb,n_subjects,share_sigma_at_grid_max,posthoc_ext_median_sigma_ms,posthoc_ext_median_R2,posthoc_ext_share_at_max,posthoc_ext_subject_AUROC
+1353,0.9847534731188315,0.9670193952487285,0.8514412416851441,60.0,2.0,60.0,60.0,0.6446029962546816,0.6162464985994398,0.403895185830477,55,0.6134515890613451,64.0,0.9893040710988888,0.0,0.6603641456582633
