@@ -28,6 +28,7 @@ class Config:
     d_window_ms: tuple = (120.0, 400.0)
     d_min_prom_frac: float = 0.05
     d_rule: str = "rebound_es"  # "window" or a key of waves.REBOUND_RULES (see docs/METHOD.md §7)
+    resample: str = ""  # "" = native 1 kHz; "125" or "125:1000" simulate a 125 Hz acquisition (io.resample_record)
 
     def pick_kw(self):
         return {"d_window_ms": self.d_window_ms, "min_prom_frac": self.d_min_prom_frac, "d_rule": self.d_rule}
@@ -68,7 +69,7 @@ def _verdict(row, cfg):
 
 def process_record(rid, specs=("sg:61:4",), channels=("PPG_Ear",), cfg=Config(), keep_ensembles=False):
     """Return (rows, ensembles). One row per (channel, spec, window)."""
-    rec = io.load_record(rid, channels=("ECG",) + tuple(channels))
+    rec = io.resample_record(io.load_record(rid, channels=("ECG",) + tuple(channels)), cfg.resample)
     fs = rec.fs
     cohort, subject, session = io.parse_rid(rid)
     r_peaks, ecg_pol = ecg.detect_r_peaks(rec.signals["ECG"], fs)

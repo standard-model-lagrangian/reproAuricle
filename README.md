@@ -16,6 +16,7 @@ The finger PPG recorded alongside the ear serves as a reference.
 | Is the PPG "D" the ArterioWave end-systolic wave? | **Unconfirmed.** It is a systolic-phase event and not tied to diastole. Against the heart-sound S2 its timing moves mostly in common with the S wave, and S-D moves little with S2 (slopes 0.08–0.18). The pressure (CNAP) reference failed. | [VALIDATION Exp 1](docs/VALIDATION.md) |
 | Diagnostic value for HF? | **Nothing beyond generic pulse shape.** The finger's HF discrimination (AUROC 0.93 in the age-overlap subset, 28–57 years) comes from standard pulse features; the D-wave features add −0.005. The ear features carry no signal. | [VALIDATION Exp 4](docs/VALIDATION.md) |
 | Is a missing rebound ("D-wave flattening") a signal? | **Weak.** ρ = −0.28 with LVEF (p = 0.09), concentrated in the 8 participants with EF ≥ 50%. | [VALIDATION Exp 3](docs/VALIDATION.md) |
+| Do the features survive MIMIC's 125 Hz? | **Yes, in simulation.** Decimating to 125 Hz and interpolating back to 1 kHz before analysis leaves yield, window-level values, between-day reliability and HF discrimination essentially unchanged. Real monitor filtering and ECG–pleth alignment are untested. | [RESULTS §8](docs/RESULTS.md) |
 | Can Auricle settle these questions? | **No.** S-D varies more from day to day than it differs between healthy people (one-session reliability 0.31–0.40). Detecting a true ρ = 0.5 between S-D and LVEF needs about 50 (ear) to 84 (finger) HF participants with a usable S-D; Auricle has 10 and 22, so its power is 19–27%. | [VALIDATION Exp 5](docs/VALIDATION.md) |
 
 **In short:** the PPG translation of ArterioWave does not hold up on Auricle. This is not a test of the method on its native modality (carotid ultrasound). Auricle is also too small to show diagnostic value in either direction.
@@ -65,6 +66,7 @@ per-window tables ─▶ scripts/* (aggregation to record → subject, statistic
 | `hf` | `classify_hf.py` | `hf_classification/` | RESULTS §4 |
 | `sweep` | `feature_sweep.py` | `sweep/` | RESULTS §6 |
 | `agreement` | `site_agreement.py` | `site_agreement/` | RESULTS §7 |
+| `downsample` | `run_batch.py --resample …`, `downsample_check.py`, `classify_hf.py` | `downsample/` | RESULTS §8 |
 | `validation` | `run_batch.py`, `run_reference.py`, `validate_construct.py`, `validate_site_rebound.py`, `validate_flattening.py`, `validate_incremental.py`, `validate_precision.py` (+ `vstats.py`) | `validation/exp1…exp5/` | VALIDATION |
 | `audit` | `run_batch.py --post-ms 1200`, `audit_checks.py` (+ reruns of Exp 3–5 on window variants) | `validation/audit/` | VALIDATION § Audit |
 
@@ -76,7 +78,7 @@ scripts/              one script per analysis; each has a docstring with purpose
   check_setup.py      preflight: Python, pinned packages, dataset present (reproduce.sh runs it first)
   compare_outputs.py  diff a regenerated output folder against the committed outputs/
 docs/METHOD.md        every processing step: what, why, assumptions, how it was checked
-docs/RESULTS.md       reproduction results (extraction, reliability, rules/filters, HF, sweep, site agreement)
+docs/RESULTS.md       reproduction results (extraction, reliability, rules/filters, HF, sweep, site agreement, 125 Hz)
 docs/VALIDATION.md    pre-registered validation experiments 1–5, results, and the audit
 outputs/              committed result tables (.csv/.md) and figures; large per-window tables are regenerated
 data/README.md        how to obtain the dataset

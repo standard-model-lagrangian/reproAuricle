@@ -20,13 +20,14 @@
 #   agreement   ear vs finger agreement by level                                  core, sweep <0.1
 #   validation  pre-registered validation experiments 1-5 (docs/VALIDATION.md)                 6
 #   audit       sensitivity reruns and audit checks (VALIDATION, Audit)           validation   13
+#   downsample  125 Hz acquisition (MIMIC rate) vs native: feature fidelity       core         1.5
 set -euo pipefail
 case ${1:-} in -h|--help) sed -n '2,/^set -euo/p' "$0" | sed '$d; s/^# \{0,1\}//'; exit 0 ;; esac
 cd "$(dirname "$0")"
 PY=${PY:-.venv-pwta/bin/python}
 OUT=${OUT:-outputs}
 JOBS=${JOBS:-6}
-STAGES=${*:-core filters drules stratified hf sweep agreement validation audit}
+STAGES=${*:-core filters drules stratified hf sweep agreement validation audit downsample}
 W20="--window-s 20 --min-window-s 15 --settle-s 5"
 ALL="--labels 0 1 2 3 4"
 J="--jobs $JOBS"
@@ -34,7 +35,7 @@ log() { printf '\n=== %s  [%s]\n' "$1" "$(date +%H:%M:%S)"; }
 need() { for f in "$@"; do [ -e "$f" ] || { echo "missing $f: run the stage that makes it first (see ./reproduce.sh --help)"; exit 1; }; done; }
 
 for stage in $STAGES; do case $stage in
-  core|filters|drules|stratified|hf|sweep|agreement|validation|audit) ;;
+  core|filters|drules|stratified|hf|sweep|agreement|validation|audit|downsample) ;;
   *) echo "unknown stage: $stage (see ./reproduce.sh --help)"; exit 1 ;;
 esac; done
 [ -x "$PY" ] || { echo "no interpreter at $PY: create the venv (README, Reproduce) or set PY=..."; exit 1; }
@@ -114,6 +115,15 @@ audit)
   "$PY" scripts/classify_hf.py "$A/windows_rest_annotated.csv" --out "$A/hf_annotated" > /dev/null
   log "audit: checks"
   "$PY" scripts/audit_checks.py checks --dir "$V" > /dev/null
+  ;;
+downsample)
+  log "downsample: 125 Hz"
+  need "$OUT/windows_rest.csv"
+  D="$OUT/downsample"
+  "$PY" scripts/run_batch.py $J --resample 125 --out "$D/windows_rest_125.csv"
+  "$PY" scripts/run_batch.py $J --resample 125:1000 --out "$D/windows_rest_125up.csv"
+  "$PY" scripts/downsample_check.py "$OUT/windows_rest.csv" "$D/windows_rest_125.csv" "$D/windows_rest_125up.csv" --out "$D" > /dev/null
+  for v in 125 125up; do "$PY" scripts/classify_hf.py "$D/windows_rest_$v.csv" --out "$D/hf_$v" > /dev/null; done
   ;;
 esac; done
 log "done -> $OUT (${SECONDS}s)"

@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 import wfdb
+from scipy.signal import resample_poly
 
 # PhysioNet Auricle 1.0.0. Set AURICLE_ROOT, or place (or symlink) the dataset folder under data/.
 DATASET_DIR = "auricle-a-multimodal-wearable-sensing-dataset-for-cardiovascular-and-hemodynamic-assessment-1.0.0"
@@ -56,6 +57,37 @@ def load_record(rid, channels=("ECG", "PPG_Ear", "PPG_Finger"), root=DATA_ROOT):
     # CNAP-derived channels only, but it is carried along so its relevance can be tested.
     cnap = np.rint(sig.pop("CNAP_Annotations")).astype(np.int8) if has_cnap else None
     return Record(rid, float(rec.fs), sig, activity, cnap)
+
+
+def resample_record(rec, spec):
+    """Simulate a lower acquisition rate (e.g. MIMIC's 125 Hz). `spec` is "F" or "F:G".
+
+    "F": anti-aliased polyphase decimation of every signal to F Hz; the label channels are
+    subsampled. The pipeline then runs at F Hz.
+    "F:G": decimate to F Hz, then interpolate back up to G Hz (band-limited reconstruction, what one
+    would do before analysing low-rate data). Labels stay on the original grid when G equals the
+    original rate, so windows match the native run exactly.
+    """
+    if not spec:
+        return rec
+    lo, *hi = (int(v) for v in str(spec).split(":"))
+    fs0 = int(round(rec.fs))
+    if fs0 % lo:
+        raise ValueError(f"{fs0} Hz is not an integer multiple of {lo} Hz")
+    q = fs0 // lo
+    sig = {k: resample_poly(v, 1, q) for k, v in rec.signals.items()}
+    act, cnap, fs = rec.activity[::q], (rec.cnap_valid[::q] if rec.cnap_valid is not None else None), float(lo)
+    if hi:
+        up = hi[0] // lo
+        n = len(rec.activity) if hi[0] == fs0 else len(act) * up
+        sig = {k: resample_poly(v, up, 1)[:n] for k, v in sig.items()}
+        if hi[0] == fs0:
+            act, cnap = rec.activity, rec.cnap_valid
+        else:
+            act = np.repeat(act, up)[:n]
+            cnap = np.repeat(cnap, up)[:n] if cnap is not None else None
+        fs = float(hi[0])
+    return Record(rec.rid, fs, sig, act, cnap)
 
 
 def load_demographics(root=DATA_ROOT):

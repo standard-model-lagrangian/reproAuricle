@@ -168,3 +168,37 @@ Rest, 60-s windows (`windows_rest.csv`), Spearman ρ, with Lin's CCC where it is
 - **With manoeuvres included** (`windows_all_20s.csv`), the wider range raises within-session ρ: ECG-S 0.74, S-D 0.57, SWS 0.66, with medians per record of 0.72 / 0.77 / 0.83. The day change in S-D agrees at ρ 0.71, with 79% the same sign.
 - **The S-D CCC is sensitive to the 4 records without an activity channel**, whose windows mix activities. Excluding them raises the rest session/subject CCC from 0.44 / 0.48 to 0.55 / 0.72†.
 - DWI/DWE has too few windows bounded at both sites to interpret (n = 7 records at rest).
+
+## 8. Do the features survive a 125 Hz acquisition? (`scripts/downsample_check.py`, `outputs/downsample/`)
+
+MIMIC waveforms are sampled at 125 Hz, against Auricle's 1 kHz. Each record's ECG and PPG were decimated to 125 Hz (polyphase, anti-aliased; `run_batch.py --resample`) and run through the unchanged pipeline in two ways:
+- **`125`:** the pipeline runs at 125 Hz. SG windows and search spans are set in ms, so they scale, and S, D and rebound times are refined to sub-sample precision by a parabola. R peaks stay on the 8-ms grid.
+- **`125up`:** the 125 Hz signals are interpolated back to 1 kHz first (band-limited reconstruction), then processed as usual. This is the recommended path for low-rate data.
+
+Windows are identical to the native run, so each window is compared with itself.
+
+```bash
+./reproduce.sh downsample      # needs core; about 1.5 minutes
+```
+
+**Results (rest windows):**
+- **Yield is almost unchanged.** Ear ok windows: HC 51% → 48–49%, HFC 22% → 21–22%. Finger: HC 85% → 85%, HFC 58% → 56–58%. 93–99% of natively ok windows stay ok.
+- **Window-level errors are small next to the physiology.** With `125up`, the 95th-percentile |difference| from native is at most a third of the native within-session SD for every timing and ratio feature. Examples: ECG-S 1.2 ms (ear) / 0.2 ms (finger); S-D 2.0 / 0.7 ms; SWS 0.013 / 0.005. Two exceptions sit at 0.39–0.62 of that SD: crest time, and ear `reb_rise_frac`, whose within-session SD is itself tiny. Record medians correlate with native at ρ ≥ 0.96, except ear S-D (0.90).
+- **Without interpolation, the 8-ms R-peak grid costs precision.** At `125`:
+  - ECG-S split-half precision worsens from 0.55 to 0.72 ms (ear) and from 0.42 to 0.69 ms (finger), with a +0.3 ms bias.
+  - Foot, crest time and SDPPG features have larger errors: up to 0.8 of the within-session SD for crest time.
+  - `125up` restores native precision.
+- **Between-day reliability is unchanged on the same windows.** Restricted to windows that pass QC in all three runs, HC ICC(2,1) at 125 Hz is within 0.02 of native for every feature except ear D-sharpness, which is unreliable at any rate (`reliability_matched.csv`).
+  - On each run's own QC, ICCs of a few fragile features move more (ear S-D: native 0.34, `125` 0.09, `125up` 0.60). This comes from a few records whose feature flips between two candidate waves (next bullet), not from the sampling rate.
+- **HF classification is unchanged.** Finger cross-validated AUROCs are within 0.01 of native at both 125 Hz variants. The ear models, at chance level natively, move by about 0.1 (`hf_125/`, `hf_125up/`).
+- **Side finding: pick instability in the native pipeline.** In a few records the S or D pick switches between two candidate waves from window to window. In HC_19_2 (finger), ECG-S alternates between about 255 and 385 ms; in HC_2_2 (ear), S-D between 179 and 343 ms. Record medians then depend on which windows pass QC.
+  - Across rest windows, ECG-S ranges over more than 60 ms in 5 of 87 ear and 8 of 102 finger records, and S-D in 4 of 56 ear and 17 of 98 finger records.
+  - Within-session physiology is about 9 ms, so these are pick ambiguities. A pick that is consistent across a record, or a robust record summary, would remove them.
+
+**Caveats.** This simulates an ideal anti-aliased 125 Hz acquisition of Auricle's own signals. MIMIC differs in ways this cannot test:
+- bedside-monitor PPG filtering and device delay;
+- unknown ECG–pleth alignment;
+- an ICU population (vasopressors, arrhythmia, arterial lines);
+- possibly a different finger sensor.
+
+The ear result has no MIMIC counterpart.

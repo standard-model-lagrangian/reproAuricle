@@ -43,12 +43,14 @@ def main():
     ap.add_argument("--min-window-s", type=float, default=Config.min_window_s)
     ap.add_argument("--settle-s", type=float, default=Config.settle_s)
     ap.add_argument("--post-ms", type=float, default=Config.post_ms, help="ensemble length after R (ms)")
+    ap.add_argument("--resample", default="", help='simulate a lower sampling rate: "125" or "125:1000"')
     ap.add_argument("--jobs", type=int, default=6)
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
 
     cfg = Config(labels=tuple(a.labels), window_s=a.window_s, min_window_s=a.min_window_s, settle_s=a.settle_s,
-                 d_window_ms=tuple(a.d_window), d_min_prom_frac=a.d_prom, d_rule=a.d_rule, post_ms=a.post_ms)
+                 d_window_ms=tuple(a.d_window), d_min_prom_frac=a.d_prom, d_rule=a.d_rule, post_ms=a.post_ms,
+                 resample=a.resample)
     rids = a.records or io.list_records()
     t0 = time.time()
     results = Parallel(n_jobs=a.jobs, verbose=5)(
