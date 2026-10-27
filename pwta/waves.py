@@ -13,8 +13,10 @@ PPG-specific choices (not specified in the manuscripts):
   213-253 +/- ~35 ms.
 - Rules (`d_rule`): "window" = deepest distinct trough 120-400 ms after S; the REBOUND_RULES
   anchor D to the dicrotic rebound (the default "rebound_es" adds an end-systolic constraint).
-  See README for the comparison that chose the default.
-- A trough/rebound is "distinct" if its prominence is >= D_MIN_PROM_FRAC of SWI.
+  See docs/METHOD.md §7 and docs/RESULTS.md §1 for the comparison that chose the default.
+- A trough/rebound is "distinct" if its prominence is >= D_MIN_PROM_FRAC of SWI. Under the rebound
+  rules the rebound carries this test: if no trough before it reaches the threshold, the deepest one is
+  taken and still counts as distinct (12% of finger ok windows, no ear windows; docs/METHOD.md §7).
 - Because diastolic dPPG/dt is negative, the zero-crossing D-wave energy (DWE) is often
   unbounded. A baseline-independent alternative is also reported: D prominence and the area
   between the trace and the prominence reference level (D_prom, D_area_local, D_sharpness).

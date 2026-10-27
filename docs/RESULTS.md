@@ -1,6 +1,6 @@
 # Results
 
-These are the results of reproducing D-only PWTA on Auricle, before the validation experiments. Every number regenerates with `./reproduce.sh` (stages `core`, `filters`, `drules`, `stratified`, `hf`, `sweep` and `agreement`). How each step works and why is in [METHOD.md](METHOD.md); the validation experiments and the audit are in [VALIDATION.md](VALIDATION.md).
+These are the results of reproducing D-only PWTA on Auricle, before the validation experiments. Every number regenerates with `./reproduce.sh` (stages `core`, `filters`, `drules`, `stratified`, `hf`, `sweep` and `agreement`), except those marked †: these came from one-off checks on the regenerated per-window tables and no script writes them. How each step works and why is in [METHOD.md](METHOD.md); the validation experiments and the audit are in [VALIDATION.md](VALIDATION.md).
 
 Defaults throughout: derivative `sg:61:4`, D rule `rebound_es`, 60-s rest windows (unless a section says 20-s), and window QC as in METHOD §8.
 
@@ -18,9 +18,9 @@ Defaults throughout: derivative `sg:61:4`, D rule `rebound_es`, 60-s rest window
   - *These numbers come from the screen rerun under the current `rebound_es` D rule (`outputs/screen/`). An earlier screen under the old `window` rule gave the same ranking.*
   - Default is `sg:61:4`; `bw:20` is an equivalent alternative.
   - **Full SG grid** (window 11–151 ms × order 2/4/6, with the `rebound_es` D rule; `outputs/sg_grid/`). For a first derivative, SG orders 2≡3 and 4≡5, so these orders cover the space. The grid was scored only on label-blind criteria.
-    - There is a broad plateau: order 2 at 31–61 ms, order 4 at 41–151 ms and order 6 at 61–151 ms all give about the same result. On the ear, that is 49–51% of windows ok, bias under 1 ms, within-session S-D SD of about 6.2 ms, between-subject SD of 20–22 ms, no S-D outside 100–350 ms, and an S-D/HR slope of −0.5 to −0.7 ms/bpm.
-    - **Under-smoothing** (11–21 ms, or order 6 below 51 ms) creates spurious troughs. Between-subject S-D SD blows up to 40–51 ms and split-half precision degrades 2–3×.
-    - **Over-smoothing** (order 2 at 81 ms or more) shifts ECG-S by 2–5 ms and S-D by up to 14 ms at the finger. It shrinks nSWI by 10–35% and erases small rebounds: the ear windows without a D wave rise from 40% to 63%.
+    - There is a broad plateau: order 4 at 51–121 ms, order 6 at 61–151 ms, and order 2 at 31 and 51 ms all give about the same result. On the ear, that is 48–51% of windows ok, ECG-S bias under 1 ms, within-session S-D SD of 6.1–6.9 ms, between-subject S-D SD of 19–23 ms, no S-D outside 100–350 ms, and an S-D/HR slope of −0.5 to −0.7 ms/bpm. Neighbouring settings miss on one criterion each: `sg:41:4`, `sg:41:2` and `sg:61:2` have a between-subject SD of 24–29 ms, and `sg:61:2` and `sg:151:4` an ECG-S bias of 1.2–1.8 ms.
+    - **Under-smoothing** (21 ms at any order, order 4 at 31 ms, order 6 at 31–51 ms) creates spurious troughs. Between-subject S-D SD rises to 35–52 ms and split-half S-D precision degrades 1.5–4× (0.74 ms for the default, up to 3.0 ms for `sg:21:6`). `sg:11:2` keeps the between-subject SD at 25 ms but loses yield (38%) and precision (2.1 ms).
+    - **Over-smoothing** (order 2 at 81 ms or more) shifts ECG-S by 2–5 ms and S-D by up to 14 ms at the finger. It shrinks nSWI by 7–20% at the ear and 13–35% at the finger (median per-window change against `bw:40`), and erases small rebounds: the ear windows without a D wave rise from 41% to 49–62%.
     - No setting recovers a D wave in the roughly 40% of ear windows that lack a rebound; the best gives 38%.
 - **D-wave rule.** Four rules were compared (`scripts/compare_d_rules.py`, `outputs/drules/`).
   - There is no ground truth, and ear and finger are **not expected to give the same S-D**: the finger is much more peripheral (longer transit, more reflection, a different vascular bed). So rules are judged on criteria intrinsic to the ear.
@@ -29,18 +29,18 @@ Defaults throughout: derivative `sg:61:4`, D rule `rebound_es`, 60-s rest window
   | rule (ear PPG) | windows ok | split-half S-D | within-session SD of S-D | between-subject SD of S-D | S-D vs HR slope (ms/bpm) | ICC S-D / SWS | ear–finger change ρ | exercise ΔS-D same sign |
   |---|---|---|---|---|---|---|---|---|
   | `window`: deepest distinct trough 120–400 ms after S | 73% | 1.3 ms | 8.8 ms | 59 ms | −0.60 | 0.41 / 0.83 | 0.33 | 69% |
-  | `rebound`: trough before the largest rebound 150–550 ms after S | 51% | 1.0 ms | 6.2 ms | 25 ms | −0.59 | 0.34 / 0.80 | 0.32 | 68% |
+  | `rebound`: trough before the largest rebound 150–550 ms after S | 51% | 1.0 ms | 6.2 ms | 25 ms | −0.59 | 0.34 / 0.80 | 0.32 | 65% |
   | **`rebound_es`**: the same, rebound ≥ 200 ms and D ≥ 120 ms after S (end-systolic constraint) | 51% | 1.0 ms | **6.3 ms** | **21 ms** | −0.59 | 0.34 / 0.80 | **0.53** | **82%** |
   | `rebound_es+shoulder`: the same, but if there is no rebound, D = local max of d²PPG/dt² (a "virtual trough") | 65% | 1.3 ms | 10.7 ms | 44 ms | −0.03 | 0.42 / 0.78 | 0.39 | 78% |
 
-  - **On windows that both `window` and `rebound_es` accept, they pick the same trough in 97% of ear windows** (95% finger). The rules differ almost only in *which windows they accept*.
-  - The 375 extra ear windows that only `window` accepts are pulses without a dicrotic rebound. Their S-D is long and scattered (median 251 ms, IQR 221–338 ms), and they cause `window`'s larger within-session and between-subject spread.
+  - **On windows that both `window` and `rebound_es` accept, they pick the same trough in 97% of ear windows** (95% finger)†. The rules differ almost only in *which windows they accept*.
+  - The 375 extra ear windows that only `window` accepts are pulses without a dicrotic rebound. Their S-D is long and scattered (median 251 ms, IQR 221–338 ms)†, and they cause `window`'s larger within-session and between-subject spread.
   - `rebound_es` is the default. It rejects pulses with no identifiable end-systolic D wave rather than guessing, and the D it does report is stable within a session and moves with the finger.
   - `rebound` without the end-systolic constraint picks mid-systolic dips, for example the spike-and-dome pulse of HFC_117, who has hypertrophic cardiomyopathy.
   - The **shoulder fallback is rejected**: it doubles within-session S-D variability and its S-D no longer shortens with HR.
   - **S-D vs HR.** All trough-based rules give about −0.6 ms/bpm within a recording: systolic-like, nowhere near the roughly −12 ms/bpm of a diastole-locked feature. That is smaller than LVET's −1.7 ms/bpm, though rest-window HR ranges are narrow. This criterion rules out the shoulder rule but doesn't separate the trough rules.
-  - **ICC is not a validity measure here.** A wrong pick that recurs every day is also repeatable. On the same 22 ear subjects `window` has the higher S-D ICC (0.60 vs 0.34), so between-day ear S-D repeatability is limited either way.
-- **Prominence threshold.** Raising the rebound/trough threshold from 5% to 10% of SWI drops yield from 61% to 56% and changes S-D in 0.2% of windows. (The 120–400 ms `--d-window` only applies to the `window` rule.)
+  - **ICC is not a validity measure here.** A wrong pick that recurs every day is also repeatable. On the same 22 ear subjects `window` has the higher S-D ICC (0.60 vs 0.34)†, so between-day ear S-D repeatability is limited either way.
+- **Prominence threshold.** Raising the rebound/trough threshold from 5% to 10% of SWI drops yield (ear and finger pooled) from 61% to 56% and changes S-D in 0.2% of windows. (The 120–400 ms `--d-window` only applies to the `window` rule.)
 
 ## 2. Reproduction results (rest windows, `sg:61:4`, D rule `rebound_es`): `outputs/summary/`
 
@@ -59,7 +59,7 @@ Defaults throughout: derivative `sg:61:4`, D rule `rebound_es`, 60-s rest window
   - When it has one, D is precise within a window, stable within a session, and moves with the finger's D within a recording.
   - Between-day S-D repeatability is still low (ICC about 0.35). Within-session SD is 6–9 ms against a between-subject SD of only 21–28 ms, so day-to-day physiological change is comparable to the spread between subjects.
   - Many ear pulses (about 40% of windows even in controls) are smooth with no rebound. These are rejected, which costs most of the HF ear data: only 5 HFrEF participants have usable ear D.
-  - On the **finger**, a missing rebound looks informative. It occurs in 2% of control windows, 19% of HFrEF and 49% of EF ≥ 50%. That may be the D-wave flattening the trial proposal links to HFpEF, but it is exploratory (n = 8 for EF ≥ 50%, and not age-matched).
+  - On the **finger**, a missing rebound looks informative. (In RESULTS, "no rebound" means no D found in an S-clean window: no rebound, or no trough before it. Experiments 2 and 3 use the narrower `reb_rise_frac < 0.05`; the two differ in about 2% of finger S-clean windows.) It occurs in 2% of control windows, 19% of HFrEF and 49% of EF ≥ 50%. That may be the D-wave flattening the trial proposal links to HFpEF, but it is exploratory (n = 8 for EF ≥ 50%, and not age-matched).
 - **Exercise recovery (cf. Fig. S8).** About 10 s after light exercise, at both sites:
   - ECG-S **shortens** by about 22 ms in 98–100% of pairs.
   - S-D lengthens by 7–12 ms.
@@ -75,7 +75,7 @@ Defaults throughout: derivative `sg:61:4`, D rule `rebound_es`, 60-s rest window
 Design: HC participants were recorded on two different days, HFC participants once. Sessions and exercise bouts of one person are repeated measures, so every test below uses one value per subject. (The pair-level `exercise_effect` table in `outputs/summary/` pseudo-replicates and is superseded by this section.)
 
 - **CNAP mask** (`CNAP_Annotations`: 0 = uncalibrated, calibration or artefact; about 4.5 s every 39 s plus the setup minutes). It is now carried in the window output as `cnap_invalid_frac`. It has no detectable effect on ECG-S, S-D, SWS, rebound presence or the exercise shifts. Finger window yield is lower in heavily masked windows (46% vs 79%), but only 9–12 records have such rest windows. Any NIBP/CNAP analysis must apply the mask.
-- **HC day 1 vs day 2 vs averaged** makes no material difference to HF-vs-control AUROCs: finger CV model 0.93 / 0.95 / 0.95, age alone 0.90.
+- **HC day 1 vs day 2 vs averaged** makes no material difference to HF-vs-control AUROCs: finger CV model 0.93 / 0.95 / 0.95, age alone 0.90†.
 - **Rebound ("notch") presence**, the fraction of S-clean windows with a derivative turning point before a rebound:
 
   | | ear | finger |
@@ -87,10 +87,10 @@ Design: HC participants were recorded on two different days, HFC participants on
 
   Rebound presence is partly a trait of the person and site, and partly a state: it disappears at higher heart rate after exercise, exactly when the exercise test needs the D wave.
 - **Post-exercise shift (cf. D-only manuscript Fig. S8; 20-s windows, change from the last pre-exercise rest window, subject medians):**
-  - **ECG-S shortens at both sites, on both days, in HC.** It falls by about 30–36 ms at 5–25 s and recovers to −8 to −11 ms by 2–4 min, without ever becoming a delay. 94–100% of HC subjects show the same sign on both days, though the size of the shift correlates only weakly between days (ρ 0.3–0.4). HFC subjects show a smaller shortening that has gone by 2–4 min.
+  - **ECG-S shortens at both sites, on both days, in HC.** It falls by about 27–36 ms at 5–25 s and recovers to −8 to −12 ms by 2–4 min, without ever becoming a delay. 94–100% of HC subjects show the same sign on both days, though the size of the shift correlates only weakly between days (ρ 0.3–0.4). HFC subjects show a smaller shortening that has gone by 2–4 min.
   - **R-to-D time shortens less than ECG-S, so S-D lengthens** (ear HC day 1: +10 to +15 ms).
   - Fig. S8 reports the opposite direction (S *delayed*, D delayed less) in one subject after a different exercise, at an unstated recovery time; its cited mechanism (Chan-Dewar 2013) concerns recovery from a 40 km ride. Auricle's 1–2 min light exercise and 5–245 s recovery show the expected sympathetic shortening instead. The PoC direction is not reproduced under these conditions, which is not a refutation.
-  - The ECG-S shift is the same whether or not a rebound is present (−26 ms in both), so it doesn't depend on the D wave. Ear D-timing shifts are testable in only 4–15 HC subjects per bin.
+  - At the ear, the ECG-S shift is the same whether or not a rebound is present (−26 and −27 ms), so it doesn't depend on the D wave. At the finger it is −26 ms with a rebound and −19 ms without, but only 11 subjects lack one. Ear D-timing shifts are testable in only 4–15 HC subjects per bin.
 
 ## 4. HF vs no-HF discrimination (`scripts/classify_hf.py`, `outputs/hf_classification/`)
 
@@ -103,10 +103,10 @@ The comparison is subject level: 27 HFC vs 42 HC. Age alone gives AUROC 0.91, be
 | ear, same features, CV logistic | 0.45 | 0.52 |
 | finger SWS alone (univariate) | 0.76 | 0.73 |
 | finger DWI/SWI alone (direction chosen post hoc: HF has a relatively larger D wave) | 0.98 | 0.96 |
-| finger, all 8 features including DWI/SWI (post hoc), CV | 0.99 | 0.94 |
+| finger, all 8 features including DWI/SWI (post hoc), CV† | 0.99 | 0.94 |
 
 - **The signal is at the finger, not the ear.** The finger features most likely reflect peripheral arterial ageing and stiffness, plus HF medication (beta-blockers, vasodilators), rather than the central S/D wave timing the method targets.
-- **Finger SWS loses most of its signal within males** (AUROC 0.61).
+- **Finger SWS loses most of its signal within males** (AUROC 0.61†).
 - **In the carotid data, the D/S intensity ratio did not differ between groups** (Table 1).
 - These are not estimates of screening performance.
 - **Age-robust check (`age_robust_checks.csv`).** Within the HF cohort, age and LVEF are nearly unrelated (ρ = −0.17), so feature–LVEF associations there are not age-driven.
@@ -115,13 +115,13 @@ The comparison is subject level: 27 HFC vs 42 HC. Age alone gives AUROC 0.91, be
   - Ear D sharpness: ρ = 0.63, n = 10.
   - ECG-S shows no LVEF association at either site.
 
-  These are 14 exploratory tests, so treat them as hypothesis-generating.
+  These are 16 exploratory tests (8 features × 2 sites), so treat them as hypothesis-generating.
 
 ## 5. Known dataset issues
 
-- Ear PPG is flat or unusable in 20 recordings (`outputs/summary/records_without_ok_ear_window.csv`), 9 of them HFC.
+- No ear window passes the full QC in 40 recordings, 17 of them HFC (`outputs/summary/records_without_ok_ear_window.csv`). In 14 of these (7 HFC) the ear PPG is mostly flat; the rest lose the S or D wave.
 - HC_21_1, HC_27_2 and HFC_141_1 have no rest labels, only exercise and not-applicable, so they produce no windows.
-- HC_1_1, HC_38_2, HFC_108_1 and HFC_124_1 have no activity channel. Their windows mix activities (label −1).
+- HC_1_1, HC_38_2, HFC_108_1 and HFC_124_1 have no activity channel. Their windows mix activities (label −1) but are kept in the rest analyses. Dropping them changes no conclusion (VALIDATION, Audit item 2).
 - The absolute ECG-S at the ear is about 250–300 ms, against about 120 ms at the carotid. The earlobe adds only about 20 ms of transit time, so most of the gap is probably the PPG device's internal filtering plus Auricle's 10 kHz → 1 kHz resampling. That offset enters ECG-S and therefore SWS, so absolute values are not comparable with the paper.
 - Many HF participants have AF (12) or CRT (5). AF beats fail the RR check, so those records yield fewer windows.
 
@@ -136,7 +136,7 @@ This covers only the ArterioWave D-only metrics: ECG-S, R-D, S-D, SWS, nSWI, nDW
 - A feature is extractable in a window when its wave passes QC: S-clean for ECG-S and nSWI, `ok` for the D metrics, and additionally a bounded D lobe for DWI/DWE.
 - Rest reliability uses steady rest only (≥ 25 s after a manoeuvre).
 - Each manoeuvre repetition (4× breath-hold, 4× Valsalva, 2× exercise, 1× cold pressor) is a trial. Its shift is the manoeuvre window (5–25 s into it) or the first post window (5–25 s after it), minus the last extractable rest window before it.
-- The detection threshold is MDC95 = 1.96 × SD of changes between rest windows 20–40 s apart in the same rest segment.
+- The detection threshold is MDC95 = 1.96 × SD of changes between steady-rest windows 20–40 s apart in the same rest segment.
 - The outputs are `yield_by_activity`, `rest_reliability`, `rest_icc_between_days`, `rest_noise_mdc`, `shift_summary` (per-trial measurability, % above MDC, subject-median shift, sign consistency across repetitions), `shift_day_reproducibility` and `trials.csv`.
 
 ## 7. Ear vs finger agreement by level (`scripts/site_agreement.py`, `outputs/site_agreement/`)
@@ -166,5 +166,5 @@ Rest, 60-s windows (`windows_rest.csv`), Spearman ρ, with Lin's CCC where it is
 - **Within a session the sites move together only moderately.** ECG-S tracks best, with equal SDs at both sites. Finger S-D and R-D vary about 1.7× as much as the ear's, so the slope of finger on ear is about 0.5. Some of the ECG-S co-movement comes from the shared R peak and HR rather than independent confirmation.
 - **The amplitude metrics are site-specific at every level**, consistent with the finger-only DWI/SWI signal in the HF classification.
 - **With manoeuvres included** (`windows_all_20s.csv`), the wider range raises within-session ρ: ECG-S 0.74, S-D 0.57, SWS 0.66, with medians per record of 0.72 / 0.77 / 0.83. The day change in S-D agrees at ρ 0.71, with 79% the same sign.
-- **The S-D CCC is sensitive to the 4 records without an activity channel**, whose windows mix activities. Excluding them raises the rest session/subject CCC from 0.44 / 0.48 to 0.55 / 0.72.
+- **The S-D CCC is sensitive to the 4 records without an activity channel**, whose windows mix activities. Excluding them raises the rest session/subject CCC from 0.44 / 0.48 to 0.55 / 0.72†.
 - DWI/DWE has too few windows bounded at both sites to interpret (n = 7 records at rest).

@@ -1,6 +1,6 @@
 # Validation experiments for D-only PWTA on Auricle
 
-The spec was written and frozen on 2026-10-26, before any of these analyses were run. The decision rules below are fixed in advance so results can't steer the criteria. Results are added at the end of each section and summarised in [Results](#results).
+The spec was written and frozen on 2026-10-26, before any of these analyses were run. The decision rules below are fixed in advance so results can't steer the criteria. This repository was created after the analyses, so its git history can't show the freeze; deviations found later are marked in the text (**Audit**). Results are added at the end of each section and summarised in [Results](#results).
 
 The five experiments answer the questions left open by the reproduction ([RESULTS.md](RESULTS.md)):
 
@@ -108,7 +108,7 @@ The PCG S2 marks AVC, so QS2 = R to S2.
 - **Apply:** to all other windows (held out: HC session 2 and HFC), deconvolve the ear ensemble pulse with a Wiener inverse of G_σpop: H/(H² + λ), λ = 10⁻² (fixed in advance; 10⁻¹ and 10⁻³ as sensitivity). Then take the same SG derivative and run the D pick on the result. The finger is not used by the corrected ear.
 - **Baseline:** the same ensemble-level path without deconvolution, which should reproduce the pipeline's values.
 - **Outcomes (held-out windows):**
-  - D-wave yield (`rebound_es` D found and distinct, with S-clean).
+  - D-wave yield (`rebound_es` D found and distinct, with S-clean). *As implemented, this is the full `ok` verdict, which also requires split-half S-D ≤ 15 ms.*
   - Split-half |ΔS-D|.
   - The fraction of S-D values in 100–350 ms.
   - The within-record S-D slope on HR.
@@ -124,7 +124,7 @@ The PCG S2 marks AVC, so QS2 = R to S2.
 - `reb_rise_frac` (continuous; lower = flatter) and `no_rebound_frac` (the share of windows with `reb_rise_frac < 0.05`), at both sites.
 - `D_sharpness` from fully ok windows, for comparison.
 
-**Primary hypothesis** (from the trial proposal's link of D-wave flattening to HFpEF, and the finger's no-rebound shares of 19% in HFrEF vs 49% in EF ≥ 50%): within the HF cohort, finger `reb_rise_frac` falls as LVEF rises. The test is a one-sided partial Spearman adjusted for age. A two-sided p is reported.
+**Primary hypothesis** (from the trial proposal's link of D-wave flattening to HFpEF, and the finger's no-rebound shares of 19% in HFrEF vs 49% in EF ≥ 50%, which RESULTS §2 counts as S-clean windows with no D found, a slightly broader definition): within the HF cohort, finger `reb_rise_frac` falls as LVEF rises. The test is a one-sided partial Spearman adjusted for age. A two-sided p is reported.
 
 **Secondary tests** (Holm-corrected as one family):
 1. The same at the ear.
@@ -132,7 +132,7 @@ The PCG S2 marks AVC, so QS2 = R to S2.
 3. AUROC for EF ≥ 50% vs EF < 40%, at each site.
 4. HF vs HC AUROC in the age-overlap subset (28–57 years).
 
-**Confounder sensitivity** for the primary test: adjust for age + HR, age + beta-blocker (yes/no), age + AF history; exclude CRT. Also the age dependence of each feature within HC, to show how strongly age alone moves it.
+**Confounder sensitivity** for the primary test: adjust for age + HR, age + beta-blocker (yes/no), age + AF history; exclude CRT. *As implemented: a blank beta-blocker entry (3 HF participants) counts as none, and a CRT entry other than "present" (including "NOT FOUND") counts as no CRT.* Also the age dependence of each feature within HC, to show how strongly age alone moves it.
 
 **Decision: "supportive"** if the primary partial ρ ≤ −0.4 with p < 0.05, and every sensitivity analysis keeps the sign with |ρ| ≥ 0.3. "Not supported" if ρ > −0.2. Otherwise "weak/inconclusive".
 
@@ -201,7 +201,7 @@ The regenerated window tables match the earlier outputs bit for bit in every exi
 | 2 | ear ≈ smoothed finger: **yes**. Smoothing explains which windows lose the rebound: **no**. Deconvolution rescues the ear D: **no** (primary λ; the two sensitivity λs pass) | The rebound loss is site-specific and haemodynamic (height, MAP), not sensor noise. Deconvolution is a real but fragile lead, not a reason for a broad filter screen. |
 | 3 | **weak/inconclusive** | Finger flattening sits in the EF ≥ 50% group (n = 8). There is no monotone LVEF gradient (ρ = −0.28, p = 0.09). |
 | 4 | **no evidence of incremental value** at either site | At the finger, age + generic pulse shape already gives AUROC 0.93 in the age-overlap subset. PWTA-D adds −0.005. No model predicts LVEF out of sample. |
-| 5 | (descriptive) | Day-to-day variation caps single-session reliability. S-D would need 6–9 separate days to reach 0.8. Auricle has 10–27% power for a true ρ = 0.5 between S-D and LVEF. |
+| 5 | (descriptive) | Day-to-day variation caps single-session reliability. S-D would need 6–9 separate days to reach 0.8. Auricle has 19–27% power for a true ρ = 0.5 between S-D and LVEF (HF-like spread; 10–24% with HC spread). |
 
 ### Experiment 1: is D end-systolic? (`outputs/validation/exp1_construct/exp1.md`)
 
@@ -212,7 +212,7 @@ The regenerated window tables match the earlier outputs bit for bit in every exi
 | R1 PCG S2 QC yield | 82% of 20-s windows; 102/107 records ≥ 50% | yes |
 | R2 earbud S2 vs PCG S2 | β 0.67 [0.55, 0.77], rmcorr 0.70 (all windows); β 0.84 [0.70, 0.97], rmcorr 0.75 (rest only). The earbud lags by 22 ms | borderline: fails with manoeuvres, passes at rest |
 | R3 plausibility | QS2 − (Weissler − 35 ms): HC −8, HFC +14 ms. CNAP ET − Weissler LVET: HC −24, HFC −45 ms | yes |
-| R4 CNAP ET vs QS2 within record | β 0.07 [−0.05, 0.21], rmcorr 0.04 (0.06 at rest; −0.04 using true-minimum notches only). CNAP ET also doesn't shorten with HR (−0.02 ms/bpm, against about −1.7 for LVET) | **no** |
+| R4 CNAP ET vs QS2 within record | β 0.07 [−0.05, 0.21], rmcorr 0.04 (β 0.06 at rest; β −0.04 using true-minimum notches only). CNAP ET also doesn't shorten with HR (−0.02 ms/bpm, against about −1.7 for LVET) | **no** |
 
 **What the gate means.**
 - The PCG S2 is a sound reference: it is found almost everywhere, sits where Weissler predicts, and agrees with the independent in-ear S2.
@@ -239,7 +239,7 @@ The CNAP ET row is uninterpretable because the reference failed.
 
 **Post hoc checks.**
 - **S-D on QS2:** ear 0.08 [−0.04, 0.24], finger 0.18 [0.09, 0.29].
-- **S-to-rebound interval** on QS2: ear −0.23, finger 0.02. On S1–S2: ear 0.11, finger 0.16.
+- **S-to-rebound interval** on QS2: ear −0.23, finger 0.02. On S1–S2: ear 0.12, finger 0.17.
 
 **Absolute lags (session medians, ms after S2).**
 - S wave −70.
@@ -271,7 +271,7 @@ The CNAP ET row is uninterpretable because the reference failed.
 - **Trait:** the ear rebound fraction rises with **height** (HC ρ 0.50, p 0.001; all 0.31) and falls with **MAP** (HC ρ −0.37, p 0.02; all −0.26). It is unrelated to age within HC, sex, BMI, HR or ear PPG amplitude.
 - **Sensor offset** is uninformative: the `PPG_Ear` coordinate sits a near-constant 0.5–0.65 cm from the ear landmark and appears to be derived from it.
 - **State, within record:** higher MAP weakens the ear rebound (rmcorr −0.20 [−0.26, −0.14]; finger −0.09).
-- **Audit:** the apparent fall in rebound presence with HR (−0.6 percentage points/bpm) comes entirely from windows above 100 bpm. There, the next-beat guard shrinks the rebound search span. Below 100 bpm the slope is +0.13 pp/bpm [−0.23, +0.47], so there is no HR effect.
+- **Audit:** the apparent fall in rebound presence with HR (−0.6 percentage points/bpm) comes entirely from windows above 100 bpm. There, the next-beat guard shrinks the rebound search span. Below 100 bpm the slope is +0.13 pp/bpm [−0.25, +0.46], so there is no HR effect.
 - **Reading:** a taller body (later wave reflection) and lower pressure (slower PWV) keep the dicrotic wave separate. This points to wave-reflection timing, which is haemodynamics, not sensor or filter.
 
 **2c. Transfer fit.**
@@ -279,7 +279,7 @@ The CNAP ET row is uninterpretable because the reference failed.
 - The blur is large, σ ≈ 60 ms. This hit the 60 ms grid edge in 61% of windows; the post hoc grid up to 160 ms gives a median of 64 ms.
 - The blur barely separates ear windows that have a rebound from those that don't: window AUROC 0.65, subject AUROC 0.62 (0.66 post hoc).
 - **Reading:** smoothing explains the shape difference between sites, not which windows lose the rebound.
-- **Audit:** the fit window was capped at R + 640 ms, against the spec's R + RR − 50, so that shifted finger samples stay inside the 800-ms ensemble. This is a deviation from the spec. Refitting with 1200-ms ensembles and the spec window gives median R² 0.976, 77% ≥ 0.95 and subject AUROC 0.60. The decisions don't change.
+- **Audit:** the fit window was capped at R + 640 ms, against the spec's R + RR − 50, so that shifted finger samples stay inside the 800-ms ensemble. This is a deviation from the spec. Refitting with 1200-ms ensembles and the spec window gives median R² 0.976, 77% ≥ 0.95 and subject AUROC 0.60 (a one-off check; no script regenerates it). The decisions don't change.
 
 **2d. Wiener deconvolution** (σ_pop = 60 ms from HC session 1; held out: HC session 2 + HFC, 898 ear windows; the baseline reproduces the pipeline exactly).
 
@@ -303,7 +303,7 @@ The CNAP ET row is uninterpretable because the reference failed.
 
 **Secondary tests:** every Holm-adjusted p is 1.
 - EF ≥ 50 vs EF < 40: finger AUROC 0.68 (p 0.18), ear 0.58.
-- HF vs HC in the age-overlap subset: 0.53 at both sites.
+- HF vs HC in the age-overlap subset: ear 0.55, finger 0.53.
 
 | median `reb_rise_frac` | finger | ear |
 |---|---|---|
@@ -356,7 +356,7 @@ The row permutation also breaks the block's correlation with the generic feature
 **Reading.**
 - **Audit, steady rest only** (windows ≥ 25 s after a manoeuvre, 686 of 1814): reliability is somewhat higher (ear S-D 0.40, ear ECG-S 0.81, finger S-D 0.39). S-D still needs about 6 days to reach 0.8, and Auricle's power for ρ = 0.5 stays at 16–25%. About 57% of rest windows start 10–24 s after a manoeuvre, so the all-rest numbers include some recovery transient.
 - The ceiling R(∞) ≈ one-session R: more windows per session wouldn't help. Day-to-day biological variation is the limit, and for S-D it is larger than the spread between healthy subjects.
-- With HF-like spread, reliability improves, but detecting a true ρ = 0.5 with LVEF still needs about 40–85 HF participants with usable features. Auricle has 10 (ear D) to 26 (finger S-tier).
+- With HF-like spread, reliability improves, but detecting a true ρ = 0.5 with LVEF still needs about 50 (ear) to 84 (finger) HF participants with a usable S-D, and 39–84 across all features. Auricle has 10 (ear D) to 26 (finger S-tier).
 - For ρ = 0.3, the needed n is 111–477.
 - Negative or weak within-HF results in Auricle, including Experiment 3, are therefore weak evidence of absence.
 - MIMIC-scale cohorts (hundreds) are the right size, provided the features survive 125 Hz sampling.
@@ -379,14 +379,14 @@ One reading is strengthened: deconvolution moves existing D picks, which adds to
 ### Checked and correct
 - **Windows:**
   - No overlaps.
-  - No window spans two activity labels (1384 spot-checked against the raw annotations).
+  - No window spans two activity labels (checked against the raw annotations for every annotated window: 1721 rest and 6783 20-s windows; `audit/window_integrity.csv`).
   - The settle times are respected.
   - PPG and reference tables join 1:1 on (rid, win_start) with matching labels.
   - New columns leave existing columns bit-identical.
 - **Heart sounds:**
   - PCG S2 was visually confirmed on random windows, including 143 bpm, SNR near threshold, and HF records.
   - S2 lands on its search bounds in < 0.1% of windows.
-  - Split-half S2 noise is about 1 ms, against a within-record SD of 17.5 ms.
+  - Split-half S2 noise is about 1 ms, against a within-record QS2 SD of 15 ms (`audit/reference_hr_slopes.csv`).
   - QS2 shortens with HR at −1.3 ms/bpm within record.
 - **Leakage:**
   - Experiment 4 imputation and scaling run inside CV folds.
@@ -415,16 +415,18 @@ One reading is strengthened: deconvolution moves existing D picks, which adds to
 ### Documented, not changed (sensitivity runs instead)
 
 **1. 800-ms ensemble truncation.**
-- The rebound search (S + 200 to 550 ms) is cut by the ensemble end in 70–85% of windows. But at 1200 ms, rebound presence changes in only 12 of 3044 S-clean windows. The finger's loss of rebound at slow HR is real.
+- The rebound search (S + 200 to 550 ms) is cut by the ensemble end in 70–85% of windows. But at 1200 ms, rebound presence changes in only 12 of 3037 S-clean windows. The finger's loss of rebound at slow HR is real.
 - PW50 was censored in 6.7% of finger windows, all low-HR controls.
 - At 1200 ms: Experiment 3 ρ −0.27, Experiment 4 E1 Δ −0.005, Experiment 5 unchanged.
 - The pipeline default is kept; `run_batch.py --post-ms` was added.
 
 **2. Unannotated records counted as rest.** The 4 records without an activity channel (HC_1_1, HC_38_2, HFC_108_1, HFC_124_1) have mixed-activity windows: 93 rest and 279 20-s windows. Excluding them:
-- Experiment 1 and Experiment 2a are unchanged.
+- Experiment 1 is unchanged (`audit/exp1_annotated/`). Experiment 2a is also unchanged, but that check was ad hoc and is not regenerated by a script.
 - Experiment 3 ρ −0.30 (n 24).
 - Experiment 4 E1 Δ +0.004.
 - Experiment 5 S-D reliability 0.28 / 0.38.
+- HF classification (RESULTS §4; `audit/hf_annotated/`): cross-validated AUROCs move by at most 0.04, except the weak ear SWS-only model (0.49 → 0.40, n 42 → 39). Univariate AUROCs move by up to 0.11, all on ear D features in the small age-overlap subset. No conclusion changes.
+- The other non-validation analyses (`summary/`, `stratified/`, `site_agreement/`, Exp 2) still include these records.
 
 **3. Post-manoeuvre transients in rest windows.** See the steady-rest result under Experiment 5: reliability rises somewhat, conclusions unchanged.
 
@@ -433,9 +435,9 @@ One reading is strengthened: deconvolution moves existing D picks, which adds to
 **5. Transfer-fit window.** It was capped at 640 ms, a deviation from the spec. A refit with the spec window leaves the decisions unchanged.
 
 **6. S1 timing reliability: unresolved.**
-- **Against attenuation:** beat-to-beat noise is small (split-half reliability of S1–S2 ≈ 0.94).
+- **Against attenuation:** beat-to-beat noise is small (split-half reliability of S1–S2 ≈ 0.94, from a one-off check that no script regenerates).
 - **For attenuation:**
-  - Within a record, S1 agrees only weakly between stethoscope and earbuds (rmcorr 0.20–0.28, against 0.63–0.72 for S2).
+  - Within a record, S1 agrees only weakly between stethoscope and earbuds (rmcorr 0.09–0.12, against 0.55–0.65 for QS2; `audit/s1_cross_sensor.csv`).
   - S1 timing doesn't move with HR.
   - A systematic window-to-window shift that is stable within a window wouldn't show up in split-half. An example is the envelope peak switching between the mitral and tricuspid components.
 - **Against attenuation:** the earbud is itself noisy, so the weak S1 agreement may be its error.

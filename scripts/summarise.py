@@ -121,11 +121,11 @@ def exercise_effect(df):
             if before.empty:
                 continue
             b = before.iloc[-1]
-            row = {"channel": ch, "rid": rid, "cohort": p.cohort}
+            row = {"channel": ch, "rid": rid, "cohort": p.cohort, "post_win_start": p.win_start}
             for m in ["HR", "ECG_S_ms", "t_D_ms", "S_D_ms", "SWS"]:
                 row[f"pre_{m}"], row[f"post_{m}"] = b[m], p[m]
             rows.append(row)
-    pairs = pd.DataFrame(rows)
+    pairs = pd.DataFrame(rows) if rows else pd.DataFrame(columns=["channel", "rid", "cohort", "post_win_start"])
     out = []
     for ch, g in pairs.groupby("channel"):
         for m in ["HR", "ECG_S_ms", "t_D_ms", "S_D_ms", "SWS"]:
@@ -133,7 +133,8 @@ def exercise_effect(df):
             out.append({"channel": ch, "metric": m, "n_pairs": len(d), "n_records": g.rid.nunique(),
                         "median_change": d.median(), "frac_increase": (d > 0).mean(),
                         "wilcoxon_p": stats.wilcoxon(d).pvalue if len(d) >= 6 else np.nan})
-    return pd.DataFrame(out), pairs
+    cols = ["channel", "metric", "n_pairs", "n_records", "median_change", "frac_increase", "wilcoxon_p"]
+    return pd.DataFrame(out, columns=cols), pairs
 
 
 def groups(rec):

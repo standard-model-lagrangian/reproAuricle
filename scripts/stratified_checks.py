@@ -63,7 +63,7 @@ def rebound_presence(df):
         rep.append({"channel": ch, "n_subjects": len(w), "spearman_day1_day2": stats.spearmanr(w[1], w[2]).statistic,
                     "mean_abs_change": (w[2] - w[1]).abs().mean()})
     # CNAP: within-record rebound rate in CNAP-invalid-heavy vs other windows
-    cn = s.groupby(["channel", "rid", "cnap_bad"]).rebound.mean().unstack("cnap_bad").dropna()
+    cn = s[s.cnap_invalid_frac.notna()].groupby(["channel", "rid", "cnap_bad"]).rebound.mean().unstack("cnap_bad").dropna()
     cnap = cn.groupby(level=0).apply(lambda t: pd.Series({
         "n_records": len(t), "rebound_cnap_ok": t[False].mean(), "rebound_cnap_invalid": t[True].mean(),
         "wilcoxon_p": wilcoxon_p(t[True] - t[False])}))
@@ -72,7 +72,7 @@ def rebound_presence(df):
 
 # ---------------------------------------------------------------- CNAP effect on timing
 def cnap_timing(df):
-    ok = df[s_clean(df)].assign(cnap_bad=lambda x: x.cnap_invalid_frac > 0.25)
+    ok = df[s_clean(df) & df.cnap_invalid_frac.notna()].assign(cnap_bad=lambda x: x.cnap_invalid_frac > 0.25)
     rows = []
     for (ch, m) in [(c, m) for c in ok.channel.unique() for m in ["ECG_S_ms", "S_D_ms", "SWS"]]:
         g = ok[ok.channel == ch]
@@ -82,7 +82,7 @@ def cnap_timing(df):
         d = t[True] - t[False]
         rows.append({"channel": ch, "metric": m, "n_records": len(t), "median_diff_invalid_minus_ok": d.median(),
                      "wilcoxon_p": wilcoxon_p(d)})
-    yield_ = df[df.ppg_flat_frac <= 0.5].assign(cnap_bad=lambda x: x.cnap_invalid_frac > 0.25).groupby(
+    yield_ = df[(df.ppg_flat_frac <= 0.5) & df.cnap_invalid_frac.notna()].assign(cnap_bad=lambda x: x.cnap_invalid_frac > 0.25).groupby(
         ["channel", "cnap_bad"]).ok.mean().unstack()
     return pd.DataFrame(rows), yield_
 
@@ -108,7 +108,7 @@ def exercise_pairs(df):
                 continue
             q = before.iloc[-1]
             row = {"channel": ch, "rid": rid, "subject": p.subject, "session": p.session, "cohort": p.cohort,
-                   "bout": int(b), "t_post_s": p.t_since_prev_s, "cnap_bad": p.cnap_invalid_frac > 0.25,
+                   "bout": int(b), "t_post_s": p.t_since_prev_s, "cnap_bad": (p.cnap_invalid_frac > 0.25) if pd.notna(p.cnap_invalid_frac) else np.nan,
                    "rebound_pre": q.D_found == True, "rebound_post": p.D_found == True}  # noqa: E712
             row["d_HR"] = p.HR - q.HR
             row["d_ECG_S_ms"] = p.ECG_S_ms - q.ECG_S_ms
@@ -117,6 +117,8 @@ def exercise_pairs(df):
                 row[f"d_{m}"] = p[m] - q[m] if both_ok else np.nan
             rows.append(row)
     ex = pd.DataFrame(rows)
+    if ex.empty:
+        raise SystemExit("no exercise pairs in these windows (are the records annotated?)")
     ex["stratum"] = ex.apply(stratum, axis=1)
     ex["t_bin"] = pd.cut(ex.t_post_s, [a for a, _ in POST_BINS] + [POST_BINS[-1][1]], right=False,
                          labels=[f"{a}-{b}s" for a, b in POST_BINS])

@@ -2,7 +2,8 @@
 
 Subject-level features come from run_batch.py output (current default pipeline). Two QC tiers:
   S-tier  windows with a clean, stable S wave (D not required): ECG-S, nSWI, HR, and the fraction
-          of windows with no dicrotic rebound (i.e. no identifiable D wave)
+          of windows with no D wave (`no_rebound_frac`: no rebound, or no trough before it; broader than
+          Experiment 3's reb_rise_frac < 0.05)
   D-tier  fully ok windows: S-D, SWS, DWI/SWI, D sharpness
 Window medians -> record means -> subject means (healthy subjects have up to two sessions).
 

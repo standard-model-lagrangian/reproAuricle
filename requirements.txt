@@ -1,4 +1,4 @@
-# Python 3.15 (tested). Exact pins: results are bit-identical under these versions.
+# Python >= 3.12 (tested on 3.13 and 3.15, identical results). Exact pins: results are bit-identical under these versions.
 joblib==1.6.0
 matplotlib==3.11.2
 neurokit2==0.2.13

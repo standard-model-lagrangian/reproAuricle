@@ -46,9 +46,9 @@ def _record_segments(rid):
     return [dict(rid=rid, label=lab, start_s=a / r.fs, dur_s=(b - a) / r.fs) for a, b, lab in segments(act)]
 
 
-def segment_table():
+def segment_table(jobs=6):
     """Every activity segment of every record (manoeuvre repetitions are counted from this)."""
-    res = Parallel(n_jobs=6)(delayed(_record_segments)(rid) for rid in io.list_records())
+    res = Parallel(n_jobs=jobs)(delayed(_record_segments)(rid) for rid in io.list_records())
     return pd.DataFrame([x for r in res for x in r])
 
 
@@ -85,8 +85,13 @@ def icc21(w):
 
 
 # ---------------------------------------------------------------- rest: coverage and reliability
+def steady_rest(df):
+    """Rest windows >= STEADY_S after a manoeuvre, or after a record start / not-applicable segment."""
+    return df[(df.label == 0) & ((df.t_since_prev_s >= STEADY_S) | (df.prev_label < 0) | (df.prev_label == 9))]
+
+
 def rest_reliability(df, ex):
-    rest = df[(df.label == 0) & ((df.t_since_prev_s >= STEADY_S) | (df.prev_label < 0) | (df.prev_label == 9))]
+    rest = steady_rest(df)
     exr = ex.loc[rest.index]
     n_subj_rec = df.groupby(["channel", "stratum"]).subject.nunique()
     rows = []
@@ -124,7 +129,7 @@ def rest_noise(df, ex):
 
     That is the gap between the baseline window and the manoeuvre / post window, so 1.96*SD is the
     smallest change one trial can show above spontaneous drift (MDC95)."""
-    rest = df[df.label == 0].copy()
+    rest = steady_rest(df).copy()
     rest["seg"] = (rest.win_start_s - rest.t_since_prev_s).round(1)
     rows = []
     for (ch, grp), g in rest.groupby(["channel", rest.cohort]):
@@ -220,11 +225,12 @@ def main():
     ap.add_argument("windows")
     ap.add_argument("--segments", default=None, help="segment table (default: rebuilt from the records)")
     ap.add_argument("--out", default="outputs/sweep")
+    ap.add_argument("--jobs", type=int, default=6)
     a = ap.parse_args()
     df = pd.read_csv(a.windows)
     df["stratum"] = stratum(df)
     ex = extractable(df)
-    segs = pd.read_csv(a.segments) if a.segments else segment_table()
+    segs = pd.read_csv(a.segments) if a.segments else segment_table(a.jobs)
     os.makedirs(a.out, exist_ok=True)
 
     # window yield by activity (all windows, not only steady rest)

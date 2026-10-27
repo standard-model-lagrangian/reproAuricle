@@ -28,7 +28,7 @@ ArterioWave's "D-only" method computes wave intensity from vessel **diameter** a
 - **Caveats carried through everything:**
   - Controls are young (median 23 vs 56 years).
   - 12 HF participants have AF and 5 have CRT.
-  - About 20 records have a flat or unusable ear PPG.
+  - 14 records have a mostly flat ear PPG, and 40 have no ear window that passes the full QC.
   - 4 records have no activity channel.
 
 ## 3. Analysis windows (`pwta/windows.py`)
@@ -36,9 +36,9 @@ ArterioWave's "D-only" method computes wave intensity from vessel **diameter** a
 | decision | value | why / assumption |
 |---|---|---|
 | Activity | rest (label 0) for most analyses; labels 0–4 for manoeuvre analyses | Rest gives a stable state; the manoeuvres (breath-hold, Valsalva, exercise, cold pressor) give within-person variation |
-| Settle time | skip the first 10 s of a segment (60-s windows) or 5 s (20-s windows) | Avoids the transient straight after a manoeuvre. The audit showed that 57% of rest windows still start 10–24 s after a manoeuvre, so `feature_sweep.py` and the steady-rest audit variant use ≥ 25 s |
+| Settle time | skip the first 10 s of a segment (60-s windows) or 5 s (20-s windows) | Avoids the transient straight after a manoeuvre. The audit showed that 57% of rest windows still start 10–24 s after a manoeuvre, so `feature_sweep.py` and the steady-rest audit variant use ≥ 25 s. The two differ slightly: `feature_sweep.py` also keeps rest that follows the record start or a not-applicable segment at any gap, while the audit variant needs ≥ 25 s after any segment |
 | Window length | 60 s, keeping a trailing remainder ≥ 30 s; or 20 s, remainder ≥ 15 s | 60 s gives a stable ensemble (median 50–65 accepted beats per ok window); 20 s resolves time courses |
-| Unannotated records | HC_1_1, HC_38_2, HFC_108_1, HFC_124_1 are tiled after a 5-min setup and labelled −1 | They would otherwise be lost, but their windows mix activities. All validation conclusions were rerun without them (audit) |
+| Unannotated records | HC_1_1, HC_38_2, HFC_108_1, HFC_124_1 are tiled from 5 min (setup) to the end, whatever activity labels are requested, and labelled −1 | They would otherwise be lost, but their windows mix activities, exercise included. The audit reran Experiments 1, 3, 4 and 5 and the HF classification without them; no conclusion changes (VALIDATION, Audit item 2). The other analyses still include them |
 
 ## 4. ECG R peaks: the timing datum (`pwta/ecg.py`)
 
@@ -51,9 +51,9 @@ ArterioWave's "D-only" method computes wave intensity from vessel **diameter** a
 - **Notch:** 60 and 120 Hz notch filters (Q = 30). This assumes 60 Hz mains, as in the code; it is harmless if no hum is present.
 - **High-pass:** 0.2 Hz, order 2, zero-phase. It removes respiratory and movement baseline drift while keeping pulse morphology.
 - **Derivative:** a zero-phase filter given as a spec string: `raw`, `sg:W:O` (Savitzky-Golay window W ms, order O), `bw:F` (Butterworth low-pass at F Hz + central difference) or `gauss:S`.
-  - **Default `sg:61:4`:** chosen from a 15-filter screen and a 29-setting SG grid on label-blind criteria.
+  - **Default `sg:61:4`:** chosen from a 15-filter screen and a 28-setting SG grid (plus the `bw:40` reference) on label-blind criteria.
   - Auricle's PPG has essentially no content above about 15 Hz, so there is a broad plateau where timing changes by < 1 ms.
-  - Under-smoothing (≤ 21 ms) creates spurious troughs; over-smoothing (order 2, ≥ 81 ms) shifts timing and erases small rebounds.
+  - Under-smoothing (21 ms, or order 4–6 at 31–51 ms) creates spurious troughs; over-smoothing (order 2, ≥ 81 ms) shifts timing and erases small rebounds.
   - For a first derivative, SG orders 2 ≡ 3 and 4 ≡ 5, so orders 2, 4 and 6 cover the space.
 - **Flat detection:** a 1-s block with peak-to-peak below 0.01 counts as flat. A window with more than 50% flat blocks is unusable (dead or unplugged sensor).
 
@@ -63,7 +63,7 @@ Ensemble averaging of R-locked beats is the method's core. It replaces beat-by-b
 
 | decision | value | why / assumption |
 |---|---|---|
-| Beat span | −100 to +800 ms around R | Covers the systolic upstroke, the D wave and the rebound at normal HR. **Limitation (audit):** at HR < 75 bpm the rebound search span and the pulse-width search are cut by the 800-ms end. Rebound detection is unaffected (12 of 3044 windows change at 1200 ms), but PW50 is censored in slow-HR windows. `run_batch.py --post-ms` exposes the length |
+| Beat span | −100 to +800 ms around R | Covers the systolic upstroke, the D wave and the rebound at normal HR. **Limitation (audit):** at HR < 75 bpm the rebound search span and the pulse-width search are cut by the 800-ms end. Rebound detection is unaffected (12 of 3037 S-clean windows change at 1200 ms), but PW50 is censored in slow-HR windows. `run_batch.py --post-ms` exposes the length |
 | RR rule | reject a beat if the previous or next RR deviates > 20% from the window median | Removes ectopics, AF irregularity and detection errors. AF records therefore yield fewer windows |
 | Clipping | reject a beat if the raw PPG reaches ±9.99 | This is the PPG's output limit |
 | Template correlation | reject a beat whose dPPG/dt correlates < 0.8 with the template over 0–600 ms; two passes (median template, then mean of accepted) | Removes motion artefact and misalignment without biasing toward any wave shape |
@@ -76,7 +76,8 @@ Ensemble averaging of R-locked beats is the method's core. It replaces beat-by-b
   - **Limitation (audit):** above about 100 bpm the guard shrinks the rebound search span, which lowers rebound detection there.
 - **D wave, rule `rebound_es` (default):** anchored to the dicrotic rebound.
   - The rebound is the dPPG/dt peak 200–550 ms after S with the largest rise (≥ 5% of SWI) from its preceding trough.
-  - D is the last trough with prominence ≥ 5% of SWI that lies ≥ 120 ms after S and before the rebound. If there is no rebound, there is no D.
+  - D is the last trough with prominence ≥ 5% of SWI that lies ≥ 120 ms after S and before the rebound. If no trough there reaches 5%, D is the deepest one; it still counts as distinct, because the rebound that anchors it is ≥ 5%. If there is no rebound, there is no D.
+  - The fallback applies to 12% of finger ok windows (171 of 1422, almost all HC) and no ear windows. Their S-D distribution matches the other windows, and dropping them leaves record-median S-D unchanged (r = 0.99, median change 0 ms). As a consequence, the `D_not_distinct` QC reason never fires under the rebound rules.
   - **Why:** PPG declines through all of diastole, so the deepest trough is often diastolic. Anchoring to the rebound picks the trough tied to the dicrotic wave. The ≥ 120 ms and ≥ 200 ms limits are an *end-systolic constraint* that excludes mid-systolic dips, such as the spike-and-dome pulse of a participant with hypertrophic cardiomyopathy (HFC_117).
   - **Alternatives compared** (RESULTS: D-wave rule): `window` (the deepest trough 120–400 ms after S), `rebound` (no end-systolic constraint) and `rebound_es+shoulder` (a virtual trough when there is no rebound). The rules agree on 97% of the windows that both accept and differ mainly in *which* windows they accept.
     - `rebound_es` gives the smallest within- and between-subject scatter and the best ear–finger co-movement.
@@ -94,7 +95,7 @@ Ensemble averaging of R-locked beats is the method's core. It replaces beat-by-b
 | `DWI_over_SWI` | DWI / SWI | Gain-free D/S intensity ratio |
 | `DWE`, `DWI_over_DWE` | area of the negative lobe at D, zero-crossing definition | Often unbounded because diastolic dPPG/dt stays negative; NaN when capped |
 | `D_sharpness` | D prominence ÷ prominence-referenced area | Baseline-free D-flattening metric |
-| `t_reb_ms`, `reb_rise_frac` | time of the rebound; largest rebound rise ÷ SWI (0 if none) | Continuous rebound strength or flattening index; "rebound present" means ≥ 0.05 |
+| `t_reb_ms`, `reb_rise_frac` | time of the rebound; largest rebound rise ÷ SWI (0 if none) | Continuous rebound strength or flattening index; "rebound present" means ≥ 0.05 in VALIDATION. RESULTS and `classify_hf.py`'s `no_rebound_frac` instead count S-clean windows with no D found (no rebound, or no trough before it) |
 
 ## 8. Window QC (`pwta/pipeline.py`)
 
@@ -139,9 +140,9 @@ These use the same R peaks and windows as the PPG pipeline, so the tables join o
 - **Repeated measures are never treated as independent.**
   - Window medians are aggregated to a record (session), then sessions to a subject mean, for subject-level tests.
   - HC sessions on different days are pairs, and manoeuvre repetitions are trials within a session.
-- **Within-record relations:** pooled slopes after demeaning per record (optionally residualised on HR). Repeated-measures correlation is the Pearson r of the record-demeaned values. 95% CIs come from a **cluster bootstrap over subjects**, 2000 replicates.
+- **Within-record relations:** pooled slopes after demeaning per record (optionally residualised on HR). Repeated-measures correlation is the Pearson r of the record-demeaned values. 95% CIs come from a **cluster bootstrap over subjects**, 2000 replicates (300–500 in the audit checks; 200 for the Experiment 2d HR slopes, which only report the point estimate).
 - **Reliability:** ICC(2,1) between days; variance components (window, day, subject) for reliability as a function of the number of windows and days (Experiment 5).
 - **Classification:** subject-level, repeated stratified 5-fold CV logistic regression (L2) with median imputation and scaling *inside folds*.
-  - Incremental value is tested with a Freedman–Lane permutation null, which permutes only the part of the added block that the base model doesn't explain.
+  - Incremental value (Experiment 4) is decided by the pre-registered null, which permutes the added block's rows across subjects. The audit also reports a Freedman–Lane null, which permutes only the part of the block that the base model doesn't explain and is the less biased test; both give the same verdict.
   - The HF-vs-control age-overlap subset is 28–57 years. The upper bound is the oldest control. The lower bound of 28 is a fixed cut, set in `classify_hf.py` before the validation and not tuned on outcomes, that removes the bulk of the young controls (median 23). That leaves 13 HC and 15 HF.
 - **Multiplicity:** primary tests were pre-registered in VALIDATION.md, and secondary families are Holm-corrected. Anything not pre-registered is labelled post hoc.

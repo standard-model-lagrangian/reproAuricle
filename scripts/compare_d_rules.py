@@ -64,15 +64,15 @@ def reaction_reference(df):
     dev = j.groupby("rid")[["e", "f"]].transform(lambda s: s - s.mean())
     rho = stats.spearmanr(dev.e, dev.f).statistic if len(dev) > 2 else np.nan
     _, pairs = exercise_effect(df)
-    p = pairs.assign(delta=pairs.post_S_D_ms - pairs.pre_S_D_ms).pivot_table(
-        index=["rid", "pre_S_D_ms"], columns="channel", values="delta") if len(pairs) else pd.DataFrame()
-    # pair ear/finger exercise bouts by record and bout order
-    ex = pairs.assign(delta=pairs.post_S_D_ms - pairs.pre_S_D_ms)
-    ex["bout"] = ex.groupby(["channel", "rid"]).cumcount()
-    w = ex.pivot_table(index=["rid", "bout"], columns="channel", values="delta").dropna()
-    sign = (np.sign(w.PPG_Ear) == np.sign(w.PPG_Finger)).mean() if len(w) and "PPG_Ear" in w else np.nan
+    # pair ear/finger exercise bouts by record and post-exercise window (both sites share windows)
+    sign, n_pairs = np.nan, 0
+    if len(pairs):
+        ex = pairs.assign(delta=pairs.post_S_D_ms - pairs.pre_S_D_ms)
+        w = ex.pivot_table(index=["rid", "post_win_start"], columns="channel", values="delta").dropna()
+        if len(w) and {"PPG_Ear", "PPG_Finger"} <= set(w.columns):
+            sign, n_pairs = (np.sign(w.PPG_Ear) == np.sign(w.PPG_Finger)).mean(), len(w)
     return {"change_rho": rho, "change_n_windows": len(dev), "change_n_records": j.rid.nunique(),
-            "exercise_sign_agree": sign, "exercise_n_pairs": len(w)}
+            "exercise_sign_agree": sign, "exercise_n_pairs": n_pairs}
 
 
 def main():
@@ -99,7 +99,8 @@ def main():
             for m in ["S_D_ms", "SWS", "D_sharpness"]:
                 t = tr[(tr.channel == ch) & (tr.metric == m)]
                 row[f"ICC_{m}"] = t["ICC(2,1)"].iloc[0] if len(t) else np.nan
-            row["ICC_n"] = int(tr[(tr.channel == ch) & (tr.metric == "S_D_ms")].n_subjects.iloc[0])
+            n = tr[(tr.channel == ch) & (tr.metric == "S_D_ms")].n_subjects
+            row["ICC_n"] = int(n.iloc[0]) if len(n) else 0
             rows.append(row)
         react.append({"rule": name, **reaction_reference(df)})
 

@@ -7,7 +7,8 @@ These are the standard morphology features PPG ageing/stiffness studies use. The
                pre-upstroke minimum)
   CT_ms        crest time, foot to systolic peak
   PW50_frac    pulse width at 50% amplitude / RR
-  b_over_a     SDPPG b/a: a = first positive peak of d2PPG/dt2 before S, b = following minimum
+  b_over_a     SDPPG b/a: a = maximum of d2PPG/dt2 from 50 ms before the foot to S (must be > 0),
+               b = minimum from a to S + 100 ms
 """
 import numpy as np
 from scipy.signal import savgol_filter

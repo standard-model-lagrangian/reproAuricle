@@ -27,7 +27,7 @@ class Config:
     # D-wave search (see waves.py)
     d_window_ms: tuple = (120.0, 400.0)
     d_min_prom_frac: float = 0.05
-    d_rule: str = "rebound_es"  # "window" or a key of waves.REBOUND_RULES (see README)
+    d_rule: str = "rebound_es"  # "window" or a key of waves.REBOUND_RULES (see docs/METHOD.md §7)
 
     def pick_kw(self):
         return {"d_window_ms": self.d_window_ms, "min_prom_frac": self.d_min_prom_frac, "d_rule": self.d_rule}

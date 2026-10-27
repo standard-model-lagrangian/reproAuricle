@@ -69,8 +69,11 @@ def main():
     os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
     df.to_csv(a.out, index=False)
     print(f"{len(df)} windows from {len(rids)} records in {time.time() - t0:.0f}s -> {a.out}")
-    for rid, tb in (f for _, f in res if f):
+    failures = [f for _, f in res if f]
+    for rid, tb in failures:
         print(f"FAILED {rid}:\n{tb}")
+    if failures:  # the table is written, but downstream stages should not run on a partial table
+        sys.exit(f"{len(failures)} record(s) failed")
 
 
 if __name__ == "__main__":

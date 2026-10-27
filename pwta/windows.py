@@ -31,7 +31,9 @@ def make_windows(activity, fs, window_s=60.0, min_window_s=30.0, settle_s=10.0,
 
     The first `settle_s` of every segment is skipped so transients from the previous
     manoeuvre do not dominate. A trailing remainder of at least `min_window_s` becomes a
-    shorter window. Unannotated records are tiled after `unannotated_skip_s` (setup period).
+    shorter window. Records without an activity channel (label NO_ANNOTATION) are tiled from
+    `unannotated_skip_s` (setup period) to the end whatever `labels` says, so their windows mix
+    activities; analyses that need pure rest drop label NO_ANNOTATION (docs/METHOD.md §3).
     """
     win, mn, settle = int(window_s * fs), int(min_window_s * fs), int(settle_s * fs)
     segs = segments(activity)

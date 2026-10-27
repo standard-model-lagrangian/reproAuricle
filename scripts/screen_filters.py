@@ -9,8 +9,8 @@ There is no ground truth for PPG wave timing, so filters are judged on:
              windows ok under *every* filter so all filters are scored on the same data
   within-rec median over records of the SD across that record's rest windows (noise + physiology)
   physiology label-blind sanity checks on the ok windows: between-subject SD of record-median S-D,
-             fraction of S-D outside 100-350 ms, fraction of S-clean windows with no dicrotic
-             rebound (no D wave), and the within-recording S-D vs HR slope (ms/bpm; systolic ~ -0.6
+             fraction of S-D outside 100-350 ms, fraction of S-clean windows with no D wave
+             (no rebound, or no trough before it), and the within-recording S-D vs HR slope (ms/bpm; systolic ~ -0.6
              here, diastole-locked ~ -12)
 
 Usage: python scripts/screen_filters.py outputs/screen/screen_rest.csv [--ref bw:40]
@@ -59,7 +59,9 @@ def screen(df, ref):
             row["records_ok"] = int((s.groupby(level="rid").ok.sum() >= 1).sum())
             row["between_subj_sd_S_D_ms"] = okw.groupby("rid").S_D_ms.median().std()
             row["frac_S_D_outside_100_350"] = ((okw.S_D_ms < 100) | (okw.S_D_ms > 350)).mean()
-            s_clean = s[(s.n_acc >= 10) & (s.S_found == True) & (s.split_dECG_S_ms <= 10)]  # noqa: E712
+            n_tot = s.n_total.where(s.n_total > 0)
+            s_clean = s[(s.n_acc >= 10) & (s.n_acc / n_tot >= 0.6) & (s.S_found == True)  # noqa: E712
+                        & (s.split_dECG_S_ms <= 10)]
             row["no_rebound_frac"] = (s_clean.D_found != True).mean()  # noqa: E712
             row["HR_slope_S_D"] = hr_slope(okw.reset_index())[0]
             out.append(row)

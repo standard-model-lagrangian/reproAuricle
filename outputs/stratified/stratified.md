@@ -52,8 +52,8 @@
 
 | channel    |   False |   True |
 |:-----------|--------:|-------:|
-| PPG_Ear    |   0.507 |  0.515 |
-| PPG_Finger |   0.794 |  0.46  |
+| PPG_Ear    |   0.503 |  0.515 |
+| PPG_Finger |   0.793 |  0.46  |
 
 ## exercise_timecourse
 

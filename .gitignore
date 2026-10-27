@@ -4,7 +4,7 @@ __pycache__/
 .DS_Store
 data/*
 !data/README.md
-outputs_fresh/
+outputs_*/
 # Large per-window tables (> 1 MB) are not committed; ./reproduce.sh regenerates them.
 outputs/**/windows_*.csv
 outputs/screen/screen_rest.csv
@@ -18,3 +18,6 @@ outputs/validation/reference_*.csv
 outputs/validation/exp2_site_rebound/deconvolution_windows.csv
 outputs/validation/exp2_site_rebound/transfer_fits.csv
 outputs/sweep/trials.csv
+# ... but these two are small site-agreement result tables named after their inputs
+!outputs/site_agreement/windows_rest.csv
+!outputs/site_agreement/windows_all_20s.csv

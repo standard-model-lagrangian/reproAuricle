@@ -67,6 +67,8 @@ def main():
     print(f"{len(df)} window rows from {len(rids)} records in {time.time() - t0:.0f}s -> {a.out}")
     for rid, tb in failures:
         print(f"FAILED {rid}:\n{tb}")
+    if failures:  # the table is written, but downstream stages should not run on a partial table
+        sys.exit(f"{len(failures)} record(s) failed")
 
 
 if __name__ == "__main__":
